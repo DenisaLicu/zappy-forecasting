@@ -1,0 +1,131 @@
+{
+  "model_type": "HistGradientBoostingRegressor",
+  "sklearn_version": "1.9.1",
+  "feature_columns": [
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "day_of_year_sin",
+    "day_of_year_cos",
+    "is_weekend",
+    "site_id"
+  ],
+  "numeric_features": [
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "day_of_year_sin",
+    "day_of_year_cos",
+    "is_weekend"
+  ],
+  "categorical_features": [
+    "site_id"
+  ],
+  "target": "consumption_kwh",
+  "training_cutoff_exclusive": "2024-12-30T19:00:00",
+  "training_rows": 34935,
+  "test_rows": 8741,
+  "sites_seen": [
+    "industrial_003",
+    "office_001",
+    "office_004",
+    "retail_002"
+  ],
+  "baseline_metrics": {
+    "mae": 6.454682866162958,
+    "rmse": 12.796847547827593,
+    "coverage": 0.9982839492048965,
+    "n_valid": 8726,
+    "n_total": 8741
+  },
+  "candidate_metrics": {
+    "mae": 3.4010811522021664,
+    "rmse": 7.74922394522759,
+    "coverage": 1.0,
+    "n_valid": 8741,
+    "n_total": 8741
+  },
+  "per_site_metrics": [
+    {
+      "site_id": "industrial_003",
+      "n_test_rows": 2186,
+      "baseline": {
+        "mae": 10.994504280263657,
+        "rmse": 21.713607346221053,
+        "coverage": 0.9986276303751144,
+        "n_valid": 2183,
+        "n_total": 2186
+      },
+      "candidate": {
+        "mae": 5.302442858563408,
+        "rmse": 13.533897920465101,
+        "coverage": 1.0,
+        "n_valid": 2186,
+        "n_total": 2186
+      }
+    },
+    {
+      "site_id": "office_001",
+      "n_test_rows": 2184,
+      "baseline": {
+        "mae": 4.561827186687101,
+        "rmse": 6.866655699964542,
+        "coverage": 0.9977106227106227,
+        "n_valid": 2179,
+        "n_total": 2184
+      },
+      "candidate": {
+        "mae": 1.5892339694904116,
+        "rmse": 2.3220429051611937,
+        "coverage": 1.0,
+        "n_valid": 2184,
+        "n_total": 2184
+      }
+    },
+    {
+      "site_id": "office_004",
+      "n_test_rows": 2187,
+      "baseline": {
+        "mae": 5.413162586652565,
+        "rmse": 8.242637939245245,
+        "coverage": 0.9990855052583447,
+        "n_valid": 2185,
+        "n_total": 2187
+      },
+      "candidate": {
+        "mae": 4.366244850478987,
+        "rmse": 5.327601507688988,
+        "coverage": 1.0,
+        "n_valid": 2187,
+        "n_total": 2187
+      }
+    },
+    {
+      "site_id": "retail_002",
+      "n_test_rows": 2184,
+      "baseline": {
+        "mae": 4.843771525789522,
+        "rmse": 8.256112842700706,
+        "coverage": 0.9977106227106227,
+        "n_valid": 2179,
+        "n_total": 2184
+      },
+      "candidate": {
+        "mae": 2.3433359822412654,
+        "rmse": 4.815706418193872,
+        "coverage": 1.0,
+        "n_valid": 2184,
+        "n_total": 2184
+      }
+    }
+  ],
+  "model_path": "artifacts/energy_forecaster.joblib",
+  "limitations": [
+    "Single chronological holdout; rolling-origin evaluation is recommended.",
+    "Calendar features only; recent-consumption lag features are not included.",
+    "Synthetic data does not establish real-world forecasting performance.",
+    "Duplicate handling keeps the first row and requires review for production."
+  ]
+}

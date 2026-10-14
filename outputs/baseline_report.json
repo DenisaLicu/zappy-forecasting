@@ -1,0 +1,17 @@
+{
+  "data_path":"data\/energy_consumption.csv",
+  "rows_after_basic_cleaning":43676,
+  "sites":[
+    "industrial_003",
+    "office_001",
+    "office_004",
+    "retail_002"
+  ],
+  "test_cutoff":"2024-12-30T19:00:00",
+  "baseline":{
+    "mae":6.4546828662,
+    "rmse":12.7968475478,
+    "coverage":0.9982839492
+  },
+  "note":"Baseline predictions requiring a lag before the training cutoff are unavailable. This is a deliberate first benchmark."
+}
