@@ -5,9 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.115.0",
     "joblib>=1.6.0",
     "mlflow>=3.5.0",
+    "numpy>=2.5.4",
+    "pandas>=3.0.6",
+    "pydantic>=2.0.0",
+    "prometheus-client>=0.20.0",
     "scikit-learn>=1.9.1",
+    "uvicorn>=0.30.0",
 ]
 
 [project.scripts]
@@ -20,6 +26,4 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "matplotlib>=3.11.2",
-    "numpy>=2.5.4",
-    "pandas>=3.0.6",
 ]
