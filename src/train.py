@@ -1,13 +1,17 @@
 
 from pathlib import Path
 import json
+import os
 
 import joblib
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from mlflow.models import infer_signature
 
 
 # ---------------------------------------------------------------------
@@ -239,7 +243,7 @@ def print_metrics(label: str, result: dict) -> None:
 # Training and reporting
 # ---------------------------------------------------------------------
 
-def main() -> None:
+def _run_training() -> None:
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -266,6 +270,23 @@ def main() -> None:
         random_state=42,
     )
 
+    mlflow.log_params({
+        "model_type": type(model).__name__,
+        "features": ",".join(FEATURES),
+        "target": TARGET,
+        "raw_rows": len(raw),
+        "cleaned_rows": len(data),
+        "train_rows": len(train),
+        "test_rows": len(test),
+        "n_sites": data["site_id"].nunique(),
+        "cutoff": cutoff.isoformat(),
+        **{
+            f"model_{key}": value
+            for key, value in model.get_params().items()
+            if key != "categorical_features"
+        },
+    })
+
     model.fit(train[FEATURES], train[TARGET])
     candidate_predictions = model.predict(test[FEATURES])
 
@@ -290,14 +311,23 @@ def main() -> None:
             f"Comparable rows: {comparable.sum():,}/{len(test):,} "
             f"({comparable.mean():.1%})"
         )
+        baseline_comparable_metrics = calculate_metrics(
+            actual[comparable], baseline_predictions[comparable]
+        )
+        candidate_comparable_metrics = calculate_metrics(
+            actual[comparable], candidate_predictions[comparable]
+        )
         print_metrics(
             "Baseline on comparable rows",
-            calculate_metrics(actual[comparable], baseline_predictions[comparable]),
+            baseline_comparable_metrics,
         )
         print_metrics(
             "Candidate on comparable rows",
-            calculate_metrics(actual[comparable], candidate_predictions[comparable]),
+            candidate_comparable_metrics,
         )
+    else:
+        baseline_comparable_metrics = {}
+        candidate_comparable_metrics = {}
 
     # Per-site metrics, using positional alignment within each site.
     test_results = test[KEYS + [TARGET]].copy().reset_index(drop=True)
@@ -366,10 +396,63 @@ def main() -> None:
     prediction_path = OUTPUT_DIR / "test_predictions.csv"
     test_results.to_csv(prediction_path, index=False)
 
+    metrics_to_log = {
+        "baseline": baseline_metrics,
+        "candidate": candidate_metrics,
+        "baseline_comparable": baseline_comparable_metrics,
+        "candidate_comparable": candidate_comparable_metrics,
+    }
+    mlflow.log_metrics({
+        f"{prefix}_{name}": value
+        for prefix, metrics in metrics_to_log.items()
+        for name, value in metrics.items()
+        if isinstance(value, (int, float)) and value is not None
+    })
+
+    mlflow.log_artifact(str(model_path), artifact_path="files")
+    mlflow.log_artifact(str(report_path), artifact_path="files")
+    mlflow.log_artifact(str(prediction_path), artifact_path="files")
+    mlflow.log_artifact(str(DATA_PATH), artifact_path="input")
+
+    signature = infer_signature(test[FEATURES], candidate_predictions)
+    mlflow.sklearn.log_model(
+        model,
+        "model",
+        registered_model_name="zappy_forecasting_model",
+        signature=signature,
+        input_example=test[FEATURES].head(5),
+        skops_trusted_types=[
+            "functools.partial",
+            "sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor",
+            "sklearn.utils.validation.check_array",
+        ],
+    )
+
     print("\n=== Artifacts saved ===")
     print(f"Model:       {model_path}")
     print(f"Report:      {report_path}")
     print(f"Predictions: {prediction_path}")
+
+
+def main() -> None:
+    tracking_uri = os.getenv(
+        "MLFLOW_TRACKING_URI",
+        "http://127.0.0.1:5000",
+    )
+    experiment_name = os.getenv("MLFLOW_EXPERIMENT_NAME", "energy-forecasting")
+
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+
+    with mlflow.start_run() as run:
+        mlflow.set_tags({
+            "project": "zappy-forecasting",
+            "training_script": "src/train.py",
+            "sklearn_version": sklearn.__version__,
+        })
+        _run_training()
+        print(f"MLflow run: {run.info.run_id}")
+        print(f"MLflow tracking URI: {tracking_uri}")
 
 
 if __name__ == "__main__":

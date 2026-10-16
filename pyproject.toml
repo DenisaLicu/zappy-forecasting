@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "joblib>=1.6.0",
+    "mlflow>=3.5.0",
     "scikit-learn>=1.9.1",
 ]
 
